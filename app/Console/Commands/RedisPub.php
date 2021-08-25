@@ -38,7 +38,7 @@ class RedisPub extends Command
      */
     public function handle(): int
     {
-        Redis::publish('channel-1', json_encode([
+        Redis::publish('events', json_encode([
             'hello' => 'world 123',
         ]));
 

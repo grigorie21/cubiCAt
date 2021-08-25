@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Redis;
+use Throwable;
 
 class RedisSub extends Command
 {
@@ -38,9 +39,15 @@ class RedisSub extends Command
      */
     public function handle(): int
     {
-        Redis::subscribe(['channel-1'], function ($message) {
-            dump($message);
-        });
+        ini_set("default_socket_timeout", -1);
+
+        try {
+            Redis::subscribe(['events'], function ($message) {
+                dump($message);
+            });
+        } catch (Throwable $e) {
+            dump($e->getMessage());
+        }
 
         return 0;
     }
