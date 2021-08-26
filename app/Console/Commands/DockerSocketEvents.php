@@ -27,61 +27,57 @@ class DockerSocketEvents extends Command
 
         if (!$socket) {
             dd($error_code, $error_message);
-        } else {
-            fwrite($socket, "GET /events HTTP/1.0\r\nHost: localhost\r\nAccept: */*\r\n\r\n");
+        }
 
-            while (!feof($socket)) {
-                try {
-                    $dataJson = fgets($socket, pow(1024, 2));
-                    $event = json_decode($dataJson);
 
-                    if (!$event) {
-                        continue;
-                    }
+        fwrite($socket, "GET /events HTTP/1.0\r\nHost: localhost\r\nAccept: */*\r\n\r\n");
 
-                    switch ($event->Type ?? null) {
-                        case 'container':
-                            $containerId = $event->id;
-                            $container = Container::get($containerId);
-                            $this->containers[$containerId] = $container;
+        while (!feof($socket)) {
+            $dataJson = fgets($socket, pow(1024, 2));
+            $event = json_decode($dataJson);
 
-                            $this->updateContainers();
-
-                            Redis::publish('events', json_encode([
-                                'type' => 'event',
-                                'context' => 'container_update',
-                                'data' => $container,
-                            ], JSON_UNESCAPED_UNICODE));
-
-                            break;
-
-                        case 'network':
-                            Redis::publish('events', json_encode([
-                                'type' => 'event',
-                                'context' => 'network',
-                                'data' => $event,
-                            ], JSON_UNESCAPED_UNICODE));
-                            break;
-
-                        case 'volume':
-                            Redis::publish('events', json_encode([
-                                'type' => 'event',
-                                'context' => 'volume',
-                                'data' => $event,
-                            ], JSON_UNESCAPED_UNICODE));
-                            break;
-
-                        default:
-                            dump($event->Type);
-                            break;
-                    }
-                } catch (Throwable $e) {
-                    dd($e->getCode(), $e->getMessage());
-                }
+            if (!$event) {
+                continue;
             }
 
-            fclose($socket);
+            switch ($event->Type ?? null) {
+                case 'container':
+                    $containerId = $event->id;
+                    $container = Container::get($containerId);
+                    $this->containers[$containerId] = $container;
+
+                    $this->updateContainers();
+
+                    Redis::publish('events', json_encode([
+                        'type' => 'event',
+                        'context' => 'container_update',
+                        'data' => $container,
+                    ], JSON_UNESCAPED_UNICODE));
+                    break;
+
+                case 'network':
+                    Redis::publish('events', json_encode([
+                        'type' => 'event',
+                        'context' => 'network',
+                        'data' => $event,
+                    ], JSON_UNESCAPED_UNICODE));
+                    break;
+
+                case 'volume':
+                    Redis::publish('events', json_encode([
+                        'type' => 'event',
+                        'context' => 'volume',
+                        'data' => $event,
+                    ], JSON_UNESCAPED_UNICODE));
+                    break;
+
+                default:
+                    dump($event->Type);
+                    break;
+            }
         }
+
+        fclose($socket);
 
         return 0;
     }

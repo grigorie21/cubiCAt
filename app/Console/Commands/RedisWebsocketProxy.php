@@ -29,7 +29,7 @@ class RedisWebsocketProxy extends Command
         $wsWorker->onWorkerStart = function () {
             $this->redis = new Client('redis://127.0.0.1:6379');
 
-            $this->redis->subscribe(['channel-1'], function ($channel, $message) {
+            $this->redis->subscribe(['events'], function ($channel, $message) {
                 foreach ($this->wsClients as $wsClient) {
                     $wsClient->send($message);
                 }

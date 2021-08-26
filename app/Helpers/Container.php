@@ -27,16 +27,20 @@ class Container
 
     public static function get(string $id): ?object
     {
-        $socket = stream_socket_client("unix:///var/run/docker.sock", $error_code, $error_message, 30);
+        do {
+            $socket = stream_socket_client("unix:///var/run/docker.sock", $error_code, $error_message, 30);
 
-        fwrite($socket, "GET http://localhost/containers/{$id}/json HTTP/1.0\r\nHost: localhost\r\nAccept: */*\r\n\r\n");
+            fwrite($socket,
+                "GET http://localhost/containers/{$id}/json HTTP/1.0\r\nHost: localhost\r\nAccept: */*\r\n\r\n");
 
-        while(!feof($socket)) {
-            $containerJson = fgets($socket, pow(1024, 2));
-            $container = json_decode($containerJson);
-        }
+            while (!feof($socket)) {
+                $containerJson = fgets($socket, pow(1024, 2));
+                $container = json_decode($containerJson);
+            }
 
-        fclose($socket);
+            fclose($socket);
+        } while (!$containerJson);
+
 
         return $container ?? null;
     }
