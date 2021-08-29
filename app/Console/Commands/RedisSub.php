@@ -38,7 +38,7 @@ class RedisSub extends Command
      */
     public function handle(): int
     {
-        Redis::subscribe(['channel-1'], function ($message) {
+        Redis::subscribe(['d1'], function ($message) {
             dump($message);
         });
 
